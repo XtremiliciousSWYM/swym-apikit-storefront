@@ -3,7 +3,7 @@ import {useState, useEffect} from 'react';
 import {Modal} from '../index';
 import {AccountDetailsEdit} from './AccountDetailsEdit.client';
 
-import swapi from '../../lib/swym-apikit/index';
+import swapi from 'swym-apikit-test';
 
 
 
@@ -15,7 +15,7 @@ export function AccountDetails({firstName, lastName, phone, email, customerAcces
   const close = () => setIsEditing(false);
 
   useEffect(() => {
-    swapi.initializeUser(customerAccessToken);
+    swapi.authenticateUser(customerAccessToken);
   }, []);
 
   

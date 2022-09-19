@@ -47,7 +47,7 @@ export function ProductDetail({title, content, learnMore}) {
         console.log(res);
       }); */
 
-      swapi.createList({lname: "testing 123"}).then((res) => {
+     /*  swapi.createList({lname: "testing 123"}).then((res) => {
         console.log(res);
       });
 
@@ -66,7 +66,7 @@ export function ProductDetail({title, content, learnMore}) {
         ]
       }).then((res) => {
         console.log(res);
-      });
+      }); */
   }, []);
 
   return (

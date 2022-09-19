@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import swapi from '../../lib/swym-apikit/index';
+import swapi from 'swym-apikit-test';
 
 import {Text, IconClose} from '~/components';
 
@@ -10,12 +10,19 @@ export function WishlistDetail() {
 
   useEffect(() => {
     swapi
-      .fetchListContent()
-      .then((res) => res.json())
+      .fetchLists()
+      .then((response) => {
+        console.log(response, "RES")
+        return response.json()})
       .then((res) => {
         console.log(res);
-        setWishlistData(res.items);
+        const defaultList = res.filter(r=>{
+            return r.lname == "My Wishlist"
+        })
+        console.log(defaultList)
+        setWishlistData(defaultList[0].listcontents);
       });
+
   }, []);
 
   console.log(wishlistData, 'data');

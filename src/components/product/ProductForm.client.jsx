@@ -1,5 +1,5 @@
 import {useEffect, useCallback, useState} from 'react';
-import swapi from '../../lib/swym-apikit';
+import swapi from 'swym-apikit-test';
 import {
   useProductOptions,
   isBrowser,

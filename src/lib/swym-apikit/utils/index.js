@@ -1,19 +1,4 @@
-import axios from 'axios'
-import qs from "qs"
-
-const apikey =
-    "5h3hT7hMOLwMan8ktVubhMNmMmaeLSUXNiiksMiYttekLaJ6k1GjJMcntqh4G1OpYTUlBmW58r82duwQJF-P1w";
-const pid = "+pxGce9PbGdFuQYBCViiiol74a7VEIWjEi1rmNHmdAQ=";
-const endpoint = "https://swymstore-v3dev-01-01.swymrelay.com";
-
-const config = {
-    storefrontAccessToken: 'd5ce1088134f96f92c84dd3a35162375', //Get from Shopify Develop app
-    storefrontGraphqlEndpoint:
-        'https://exploration-dev.myshopify.com/api/2021-07/graphql.json', //Shopiy Store url with graphql endpoint
-    swymPid: '+pxGce9PbGdFuQYBCViiiol74a7VEIWjEi1rmNHmdAQ=', //Unique provider id from Swym Dashboard
-    swymHost: 'https://swymstore-v3dev-01-01.swymrelay.com', //Get from Swym Dashboard
-    swymLname: 'My Wishlist',
-}
+import config from "../config"
 
 let hdls_ls_name = 'hdls_ls' // Local Storage Key storing config and list objects
 
@@ -22,9 +7,9 @@ let hdls_ls_name = 'hdls_ls' // Local Storage Key storing config and list object
 export const swymPostData = async (url = "", data = {}, successCallback, failureCallback) => {
 
     var urlencoded = new URLSearchParams()
-    for(const key in data){
+    for (const key in data) {
         let dataValue = data[key];
-        if(Array.isArray(dataValue)){
+        if (Array.isArray(dataValue)) {
 
             dataValue = JSON.stringify(data[key])
         }
@@ -82,20 +67,6 @@ function compareTimestamp(endDate, startDate) {
     return diff / 60000
 }
 
-async function hdls_SetLocalStorage(swymData) {
-    var hdls_ls = JSON.parse(localStorage.getItem(hdls_ls_name))
-
-    var addData = {
-        // ...hdls_ls,
-        ...swymData,
-    }
-
-    localStorage.setItem(hdls_ls_name, JSON.stringify(addData))
-
-    console.log(swymData)
-
-    return addData
-}
 
 export async function initDefaultWishlist(swymConfig) {
     console.log('Hdls - Fetching or Creating List for Current Regid')
@@ -145,7 +116,7 @@ export async function initDefaultWishlist(swymConfig) {
         })
 }
 
-export async function refreshSwymConfig(swymConfig, skipCheck = false) {
+export async function refreshSwymConfig(swymConfig, skipCheck = false, token = null) {
 
 
     if (window._isSwymLoading && !skipCheck) {
@@ -159,11 +130,11 @@ export async function refreshSwymConfig(swymConfig, skipCheck = false) {
 
     //console.log(swymConfigData)
 
-    if (swymConfigData == null || Object.keys(swymConfigData).length === 0) {
+    if (swymConfigData == null || Object.keys(swymConfigData).length === 0 || token) {
         console.log('Regid not found on refresh', swymConfig)
 
-        var swymRegid = await generateSwymConfig(null)
-        swymConfigData = { ...swymConfigData, ...swymRegid }
+        var swymRegid = await generateSwymConfig(token)
+        swymConfigData = { ...swymRegid }
         return refreshSwymConfig(swymConfigData, true)
     } else if (
         swymConfigData.swymSession != null &&
@@ -195,59 +166,64 @@ export async function refreshSwymConfig(swymConfig, skipCheck = false) {
 async function getCustomerEmail(customerToken) {
     var myHeaders = new Headers()
     myHeaders.append(
-      'X-Shopify-Storefront-Access-Token',
-      config.storefrontAccessToken
+        'X-Shopify-Storefront-Access-Token',
+        config.storefrontAccessToken
     )
     myHeaders.append('Content-Type', 'application/json')
-  
+
     var graphql = JSON.stringify({
-      query: `{\n  customer(customerAccessToken : "${customerToken}") {\n    id\n    firstName\n    lastName\n    acceptsMarketing\n    email\n    phone\n  }\n}`,
-      variables: {},
+        query: `{\n  customer(customerAccessToken : "${customerToken}") {\n    id\n    firstName\n    lastName\n    acceptsMarketing\n    email\n    phone\n  }\n}`,
+        variables: {},
     })
     var requestOptions = {
-      method: 'POST',
-      headers: myHeaders,
-      body: graphql,
-      redirect: 'follow',
+        method: 'POST',
+        headers: myHeaders,
+        body: graphql,
+        redirect: 'follow',
     }
-  
-    return fetch(config.storefrontGraphqlEndpoint, requestOptions)
-      .then((response) => response.json())
-      .then((result) => {
-        return result
-      })
-      .catch((error) => console.log('error', error))
-  }
 
-  function createSessionid(len) {
+    return fetch(config.storefrontGraphqlEndpoint, requestOptions)
+        .then((response) => response.json())
+        .then((result) => {
+            return result
+        })
+        .catch((error) => console.log('error', error))
+}
+
+function createSessionid(len) {
     // Len is length usually 64
     var outStr = '',
-      newStr
+        newStr
     while (outStr.length < len) {
-      newStr = Math.random().toString(36 /*radix*/).slice(2 /* drop decimal*/)
-      outStr += newStr.slice(0, Math.min(newStr.length, len - outStr.length))
+        newStr = Math.random().toString(36 /*radix*/).slice(2 /* drop decimal*/)
+        outStr += newStr.slice(0, Math.min(newStr.length, len - outStr.length))
     }
-  
+
     var timestamp = Date.now()
-  
+
     var swymSession = {
-      sessionid: outStr.toLowerCase(),
-      timestamp: timestamp,
+        sessionid: outStr.toLowerCase(),
+        timestamp: timestamp,
     }
-  
+
     return outStr.toLowerCase()
-  }
+}
 
 export async function generateSwymConfig(customerToken) {
     if (customerToken != null) {
+
         var data = await getCustomerEmail(customerToken)
 
         console.log(data.data.customer)
         var hdls_ls = JSON.parse(localStorage.getItem(hdls_ls_name))
 
+        if(hdls_ls?.regid == null){
+            hdls_ls = await generateSwymConfig();
+        }
+
         var extuid = window
-        .atob(data.data.customer.id)
-        .split('gid://shopify/Customer/')[1]
+            .atob(data.data.customer.id)
+            .split('gid://shopify/Customer/')[1]
 
         var myHeaders = new Headers()
         myHeaders.append('Content-Type', 'application/x-www-form-urlencoded')
@@ -323,11 +299,3 @@ export async function generateSwymConfig(customerToken) {
     }
 }
 
-const utils = {
-    swymPostData,
-    generateSwymConfig,
-    refreshSwymConfig
-}
-
-
-export default utils
