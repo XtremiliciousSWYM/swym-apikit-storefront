@@ -77,7 +77,7 @@ export default function Product() {
                     <Text className={'opacity-50 font-medium'}>{vendor}</Text>
                   )}
                 </div>
-                <ProductForm />
+                <ProductForm data={product}/>
                 <div className="grid gap-4 py-4">
                   {descriptionHtml && (
                     <ProductDetail

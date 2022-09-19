@@ -9,6 +9,8 @@ import {
   useShopQuery,
 } from '@shopify/hydrogen';
 
+import swapi from '../../lib/swym-apikit';
+
 import {PRODUCT_CARD_FRAGMENT} from '~/lib/fragments';
 import {getApiErrorMessage} from '~/lib/utils';
 import {
@@ -29,6 +31,8 @@ export default function Account({response}) {
     country: {isoCode: countryCode},
   } = useLocalization();
   const {customerAccessToken} = useSession();
+
+  //swapi.initializeUser(customerAccessToken);
 
   if (!customerAccessToken) return response.redirect('/account/login');
 
@@ -57,11 +61,14 @@ export default function Account({response}) {
     customer.defaultAddress.id.lastIndexOf('?'),
   );
 
+  console.log(customer)
+
   return (
     <>
       <AuthenticatedAccount
         customer={customer}
         addresses={addresses}
+        customerAccessToken={customerAccessToken}
         defaultAddress={defaultAddress}
         featuredCollections={flattenConnection(featuredCollections)}
         featuredProducts={flattenConnection(featuredProducts)}
@@ -73,6 +80,7 @@ export default function Account({response}) {
 function AuthenticatedAccount({
   customer,
   addresses,
+  customerAccessToken,
   defaultAddress,
   featuredCollections,
   featuredProducts,
@@ -95,6 +103,7 @@ function AuthenticatedAccount({
       </PageHeader>
       {orders && <AccountOrderHistory orders={orders} />}
       <AccountDetails
+      customerAccessToken={customerAccessToken}
         firstName={customer.firstName}
         lastName={customer.lastName}
         phone={customer.phone}

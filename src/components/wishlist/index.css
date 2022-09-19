@@ -1,0 +1,13 @@
+.product-grid{
+    display: flex;
+    gap: 2%
+    
+}
+
+.product-item{
+    width: 24%;
+}
+
+.product-title{
+    margin-block: 10px;
+}

@@ -21,25 +21,32 @@ let hdls_ls_name = 'hdls_ls' // Local Storage Key storing config and list object
 
 export const swymPostData = async (url = "", data = {}, successCallback, failureCallback) => {
 
-    var data = qs.stringify(data);
+    var urlencoded = new URLSearchParams()
+    for(const key in data){
+        let dataValue = data[key];
+        if(Array.isArray(dataValue)){
+
+            dataValue = JSON.stringify(data[key])
+        }
+        urlencoded.append(key, dataValue)
+    }
 
 
-    console.log(url, data)
+    console.log(url, data, "CALL")
 
     // Default options are marked with *
-    return await axios({
+    return await fetch(url, {
         method: "POST",
-        url: url,
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",
         },
-        data: data,
+        body: urlencoded,
     }).then(function (response) {
-        //console.log(response.data);
+        console.log(response);
         if (successCallback) {
             successCallback(response.data)
         }
-        return response.data;
+        return response;
 
     }).catch(function (error) {
         console.log(error);
@@ -185,14 +192,62 @@ export async function refreshSwymConfig(swymConfig, skipCheck = false) {
     }
 }
 
+async function getCustomerEmail(customerToken) {
+    var myHeaders = new Headers()
+    myHeaders.append(
+      'X-Shopify-Storefront-Access-Token',
+      config.storefrontAccessToken
+    )
+    myHeaders.append('Content-Type', 'application/json')
+  
+    var graphql = JSON.stringify({
+      query: `{\n  customer(customerAccessToken : "${customerToken}") {\n    id\n    firstName\n    lastName\n    acceptsMarketing\n    email\n    phone\n  }\n}`,
+      variables: {},
+    })
+    var requestOptions = {
+      method: 'POST',
+      headers: myHeaders,
+      body: graphql,
+      redirect: 'follow',
+    }
+  
+    return fetch(config.storefrontGraphqlEndpoint, requestOptions)
+      .then((response) => response.json())
+      .then((result) => {
+        return result
+      })
+      .catch((error) => console.log('error', error))
+  }
+
+  function createSessionid(len) {
+    // Len is length usually 64
+    var outStr = '',
+      newStr
+    while (outStr.length < len) {
+      newStr = Math.random().toString(36 /*radix*/).slice(2 /* drop decimal*/)
+      outStr += newStr.slice(0, Math.min(newStr.length, len - outStr.length))
+    }
+  
+    var timestamp = Date.now()
+  
+    var swymSession = {
+      sessionid: outStr.toLowerCase(),
+      timestamp: timestamp,
+    }
+  
+    return outStr.toLowerCase()
+  }
+
 export async function generateSwymConfig(customerToken) {
     if (customerToken != null) {
-        var data = await hdls_GetCustomerEmail(customerToken)
+        var data = await getCustomerEmail(customerToken)
 
         console.log(data.data.customer)
         var hdls_ls = JSON.parse(localStorage.getItem(hdls_ls_name))
 
-        var extuid = "TODO"
+        var extuid = window
+        .atob(data.data.customer.id)
+        .split('gid://shopify/Customer/')[1]
 
         var myHeaders = new Headers()
         myHeaders.append('Content-Type', 'application/x-www-form-urlencoded')
@@ -223,7 +278,7 @@ export async function generateSwymConfig(customerToken) {
                 const swymConfig = {
                     regid: result.regid,
                     swymSession: {
-                        sessionid: hdls_CreateSessionid(32),
+                        sessionid: createSessionid(32),
                         timestamp: Date.now(),
                     },
                 }
@@ -268,8 +323,9 @@ export async function generateSwymConfig(customerToken) {
     }
 }
 
-export const utils = {
+const utils = {
     swymPostData,
+    generateSwymConfig,
     refreshSwymConfig
 }
 

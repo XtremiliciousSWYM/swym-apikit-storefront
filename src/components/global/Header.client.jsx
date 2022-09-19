@@ -152,6 +152,9 @@ function DesktopHeader({countryCode, isHome, menu, openCart, title}) {
           ))}
         </nav>
       </div>
+      <Link className={`font-bold`} to="/wishlist">
+          Wishlist
+        </Link>
       <div className="flex items-center gap-1">
         <form
           action={`/${countryCode ? countryCode + '/' : ''}search`}

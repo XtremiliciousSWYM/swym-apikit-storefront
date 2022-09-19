@@ -1,5 +1,5 @@
 import {useEffect, useCallback, useState} from 'react';
-
+import swapi from '../../lib/swym-apikit';
 import {
   useProductOptions,
   isBrowser,
@@ -11,14 +11,19 @@ import {
 
 import {Heading, Text, Button, ProductOptions} from '~/components';
 
-export function ProductForm() {
+export function ProductForm({data}) {
   const {pathname, search} = useUrl();
   const [params, setParams] = useState(new URLSearchParams(search));
 
   const {options, setSelectedOption, selectedOptions, selectedVariant} =
     useProductOptions();
 
+    console.log("PRODUCT", data, selectedVariant)
+
   const isOutOfStock = !selectedVariant?.availableForSale || false;
+
+  const [addedToWishlist, setAddedToWishlist] = useState(false)
+  
   const isOnSale =
     selectedVariant?.priceV2?.amount <
       selectedVariant?.compareAtPriceV2?.amount || false;
@@ -50,6 +55,20 @@ export function ProductForm() {
       }
     });
   }, []);
+
+  const addToWishlist = () => {
+    swapi.updateListCtx({
+      "a": [
+        {
+          "empi": data.id.split("gid://shopify/Product/")[1],
+          "du": window.location.origin + window.location.pathname,
+          "epi": selectedVariant.id.split("gid://shopify/ProductVariant/")[1]
+        }
+      ]
+    }, function(){
+      setAddedToWishlist(true)
+    })
+  }
 
   const handleChange = useCallback(
     (name, value) => {
@@ -136,6 +155,19 @@ export function ProductForm() {
             )}
           </Button>
         </AddToCartButton>
+
+        <div>
+          <Button
+            width="full"
+            variant={'primary'}
+            as="span"
+            onClick={()=>{addToWishlist()}}
+          >
+            <Text as="span" className="flex items-center justify-center gap-2">
+              <span>{!addedToWishlist ? "Add to Wishlist" : "Added to Wishlist"}</span> 
+            </Text>
+          </Button>
+        </div>
         {!isOutOfStock && <ShopPayButton variantIds={[selectedVariant.id]} />}
       </div>
     </form>

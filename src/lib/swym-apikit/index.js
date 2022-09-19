@@ -1,4 +1,5 @@
 //import encodeURIComponent from 'encodeURIComponent'
+import qs from "qs"
 
 
 const config = {
@@ -11,12 +12,15 @@ const config = {
 }
 
 let hdls_ls_name = 'hdls_ls' // Local Storage Key storing config and list objects
-import utils from "./utils"
+import {generateSwymConfig} from "./utils"
 
 
 
 
 export const swapi = {
+    initializeUser: async (customerAccessToken) => {
+        generateSwymConfig(customerAccessToken)
+    },
     generateSessionId: (len) => {
         var outStr = "",
             newStr;
@@ -37,7 +41,7 @@ export const swapi = {
 
         return userIds;
     },
-    createList: async (options = {}) => {
+    createList: async (options) => {
         const configData = await utils.refreshSwymConfig(null);
         console.log(configData)
         options.regid = encodeURIComponent(configData.regid);
@@ -62,7 +66,7 @@ export const swapi = {
             options
         );
     },
-    updateList: async (options = {}) => {
+    updateList: async (options) => {
         const configData = await utils.refreshSwymConfig(null);
         console.log(configData)
 
@@ -74,7 +78,7 @@ export const swapi = {
             options
         );
     },
-    deleteList: async (options = {}) => {
+    deleteList: async (options) => {
         if (regid == null || sessionid == null) {
             await swapi.generateUserIds();
         }
@@ -87,33 +91,43 @@ export const swapi = {
             options
         );
     },
-    fetchListContent: async (options = {}) => {
-        if (regid == null || sessionid == null) {
-            await swapi.generateUserIds();
-        }
+    fetchListContent: async (options = {}, successCallback) => {
+        const configData = await utils.refreshSwymConfig(null);
+        console.log(configData)
 
-        options.regid = encodeURIComponent(regid);
-        options.sessionid = encodeURIComponent(sessionid);
+        options.regid = encodeURIComponent(configData.regid);
+        options.sessionid = encodeURIComponent(configData.swymSession.sessionid);
+
+        if(options.lid == null){
+            options.lid = configData.lid
+        }
 
         return await utils.swymPostData(
             `${config.swymHost}/api/v3/lists/fetch-list-with-contents?pid=${encodeURIComponent(config.swymPid)}`,
-            options
+            options,
+            successCallback
         );
     },
-    updateListCtx: async (options = {}) => {
-        if (regid == null || sessionid == null) {
-            await swapi.generateUserIds();
-        }
+    updateListCtx: async (options, successCallback) => {
+        const configData = await utils.refreshSwymConfig(null);
+        console.log(configData, options, "OPTIONS")
 
-        options.regid = encodeURIComponent(regid);
-        options.sessionid = encodeURIComponent(sessionid);
+
+
+        options.regid = encodeURIComponent(configData.regid);
+        options.sessionid = encodeURIComponent(configData.swymSession.sessionid);
+
+        if(options.lid == null){
+            options.lid = configData.lid
+        }
 
         return await utils.swymPostData(
             `${config.swymHost}/api/v3/lists/update-ctx?pid=${encodeURIComponent(config.swymPid)}`,
-            options
+            options,
+            successCallback
         );
     },
-    createSubscription: async (options = {}) => {
+    createSubscription: async (options) => {
         if (regid == null || sessionid == null) {
             await swapi.generateUserIds();
         }

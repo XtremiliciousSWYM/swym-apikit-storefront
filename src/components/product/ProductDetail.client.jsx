@@ -54,6 +54,19 @@ export function ProductDetail({title, content, learnMore}) {
       swapi.fetchLists().then((res) => {
         console.log(res);
       });
+
+      swapi.updateListCtx({
+        lid: "0d750bad-ea7d-4e82-908d-d4d7bdbd25c1",
+        "a": [
+          {
+            "empi":"6635874517249",
+            "du": "http://localhost:3000/products/14k-wire-bloom-earrings",
+            "epi": "39463179256065"
+          }
+        ]
+      }).then((res) => {
+        console.log(res);
+      });
   }, []);
 
   return (

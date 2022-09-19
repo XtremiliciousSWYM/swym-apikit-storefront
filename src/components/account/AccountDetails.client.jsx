@@ -1,12 +1,24 @@
 import {Seo} from '@shopify/hydrogen';
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import {Modal} from '../index';
 import {AccountDetailsEdit} from './AccountDetailsEdit.client';
 
-export function AccountDetails({firstName, lastName, phone, email}) {
+import swapi from '../../lib/swym-apikit/index';
+
+
+
+export function AccountDetails({firstName, lastName, phone, email, customerAccessToken}) {
   const [isEditing, setIsEditing] = useState(false);
 
+  console.log(customerAccessToken)
+
   const close = () => setIsEditing(false);
+
+  useEffect(() => {
+    swapi.initializeUser(customerAccessToken);
+  }, []);
+
+  
 
   return (
     <>
