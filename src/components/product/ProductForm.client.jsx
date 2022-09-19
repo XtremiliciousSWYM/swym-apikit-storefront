@@ -56,18 +56,33 @@ export function ProductForm({data}) {
     });
   }, []);
 
+
+
   const addToWishlist = () => {
-    swapi.updateListCtx({
-      "a": [
-        {
-          "empi": data.id.split("gid://shopify/Product/")[1],
-          "du": window.location.origin + window.location.pathname,
-          "epi": selectedVariant.id.split("gid://shopify/ProductVariant/")[1]
-        }
-      ]
-    }, function(){
-      setAddedToWishlist(true)
-    })
+    swapi.fetchLists().then((response) => {
+      console.log(response, "RES")
+      return response.json()})
+    .then((res) => {
+      console.log(res);
+      const defaultList = res.filter(r=>{
+          return r.lname == "My Wishlist"
+      })
+      console.log(defaultList)
+
+      swapi.updateListCtx({
+        lid: defaultList[0].lid,
+        "a": [
+          {
+            "empi": data.id.split("gid://shopify/Product/")[1],
+            "du": window.location.origin + window.location.pathname,
+            "epi": selectedVariant.id.split("gid://shopify/ProductVariant/")[1]
+          }
+        ]
+      }, function(){
+        setAddedToWishlist(true)
+      })
+    });
+    
   }
 
   const handleChange = useCallback(
